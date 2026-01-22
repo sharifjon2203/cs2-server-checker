@@ -1,12 +1,76 @@
-<!DOCTYPE html>
-<html lang="en">
+<!doctype html>
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CS2 Server Checker</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>CS2 Server Checker</title>
+  <style>
+    body{font-family:system-ui,Segoe UI,Arial,Helvetica,sans-serif;margin:20px}
+    label,input{display:block;margin:6px 0}
+    button{margin-top:8px}
+    .online{color:green}.offline{color:red}
+    pre{background:#f6f6f6;padding:10px;border-radius:4px}
+    .card{border:1px solid #e5e5e5;padding:12px;border-radius:8px;max-width:900px}
+  </style>
 </head>
 <body>
-    <h1>Welcome to CS2 Server Checker</h1>
-    <p>This application checks the status of CS2 servers.</p>
+  <h1>CS2 Server Checker</h1>
+  <p>Enter server IP/hostname and port (default 27015)</p>
+
+  <div class="card">
+    <form id="q">
+      <label>Host (IP or hostname)
+        <input id="host" required placeholder="example.com or 1.2.3.4" />
+      </label>
+      <label>Port
+        <input id="port" placeholder="27015" />
+      </label>
+      <button type="submit">Query</button>
+    </form>
+
+    <div id="out" style="margin-top:18px"></div>
+  </div>
+
+  <script>
+    const form = document.getElementById('q');
+    const out = document.getElementById('out');
+
+    form.addEventListener('submit', async (ev) => {
+      ev.preventDefault();
+      out.innerHTML = 'Querying...';
+      const host = document.getElementById('host').value.trim();
+      const port = document.getElementById('port').value.trim() || undefined;
+
+      try {
+        const res = await fetch('/api/query', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ host, port })
+        });
+        const json = await res.json();
+        if (!json || json.success === false) {
+          out.innerHTML = `<div class="offline">Error: ${escapeHtml(json && (json.error || JSON.stringify(json)) || 'Unknown error')}</div>`;
+          return;
+        }
+
+        const players = (json.players || []).map(p => p.name || '<unnamed>').join(', ') || '—';
+        out.innerHTML = `
+          <h3>${escapeHtml(json.name || (host + ':' + (port || '27015')))}</h3>
+          <div><strong>Map:</strong> ${escapeHtml(json.map || '—')}</div>
+          <div><strong>Players:</strong> ${escapeHtml(String(json.current || 0))} / ${escapeHtml(String(json.max || 0))}
+            <div style="font-size:0.95em;color:#333; margin-top:6px">${escapeHtml(players)}</div>
+          </div>
+          <div><strong>Ping:</strong> ${escapeHtml(String(json.ping || '—'))}</div>
+          <details style="margin-top:10px"><summary>Raw response</summary><pre>${escapeHtml(JSON.stringify(json.raw || json, null, 2))}</pre></details>
+        `;
+      } catch (err) {
+        out.innerHTML = `<div class="offline">Request failed: ${escapeHtml(String(err))}</div>`;
+      }
+    });
+
+    function escapeHtml(s) {
+      return String(s).replace(/[&<>\"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    }
+  </script>
 </body>
 </html>
