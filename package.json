@@ -1,0 +1,18 @@
+{
+  "name": "cs2-server-checker",
+  "version": "1.0.0",
+  "description": "Simple CS2 server stats checker where you can enter an IP:port and see live stats (node-gamedig)",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "start:dev": "nodemon server.js"
+  },
+  "author": "sharifjon2203",
+  "license": "MIT",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.18.2",
+    "express-rate-limit": "^6.7.0",
+    "gamedig": "^2.0.12"
+  }
+}
